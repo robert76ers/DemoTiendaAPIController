@@ -5,13 +5,6 @@ VisualStudioVersion = 17.14.36202.13
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoTiendaAPIController", "DemoTiendaAPIController\DemoTiendaAPIController.csproj", "{DBB37239-8FE1-4A69-90C6-CA53B5DA2789}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Database", "Database", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
-	ProjectSection(SolutionItems) = preProject
-		..\..\..\OneDrive\Escritorio\Curso .Net BOZ\Scripts BD\1 CREATE BD AND TABLES.sql = ..\..\..\OneDrive\Escritorio\Curso .Net BOZ\Scripts BD\1 CREATE BD AND TABLES.sql
-		..\..\..\OneDrive\Escritorio\Curso .Net BOZ\Scripts BD\2 CREATE OR ALTER VIEW dbo.vProductosCategoria.sql = ..\..\..\OneDrive\Escritorio\Curso .Net BOZ\Scripts BD\2 CREATE OR ALTER VIEW dbo.vProductosCategoria.sql
-		..\..\..\OneDrive\Escritorio\Curso .Net BOZ\Scripts BD\3 INSERTS.sql = ..\..\..\OneDrive\Escritorio\Curso .Net BOZ\Scripts BD\3 INSERTS.sql
-	EndProjectSection
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
