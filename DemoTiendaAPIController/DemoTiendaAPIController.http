@@ -1,0 +1,6 @@
+@DemoTiendaAPIController_HostAddress = http://localhost:5189
+
+GET {{DemoTiendaAPIController_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
