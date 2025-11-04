@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace DemoTiendaAPIController.Data;
 
-public partial class vProductosConCategorium
+public partial class vProductosConCategoria
 {
     public int Id { get; set; }
 

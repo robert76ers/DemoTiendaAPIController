@@ -22,16 +22,16 @@ namespace DemoTiendaAPIController.Controllers
 
         // GET: api/Categoria
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Categorium>>> GetCategoria()
+        public async Task<ActionResult<IEnumerable<Categoria>>> GetCategoria()
         {
-            return await _context.Categoria.ToListAsync();
+            return await _context.Categorias.ToListAsync();
         }
 
         // GET: api/Categoria/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Categorium>> GetCategorium(int id)
+        public async Task<ActionResult<Categoria>> GetCategorium(int id)
         {
-            var categorium = await _context.Categoria.FindAsync(id);
+            var categorium = await _context.Categorias.FindAsync(id);
 
             if (categorium == null)
             {
@@ -44,7 +44,7 @@ namespace DemoTiendaAPIController.Controllers
         // PUT: api/Categoria/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutCategorium(int id, Categorium categorium)
+        public async Task<IActionResult> PutCategorium(int id, Categoria categorium)
         {
             if (id != categorium.Id)
             {
@@ -75,9 +75,9 @@ namespace DemoTiendaAPIController.Controllers
         // POST: api/Categoria
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Categorium>> PostCategorium(Categorium categorium)
+        public async Task<ActionResult<Categoria>> PostCategorium(Categoria categorium)
         {
-            _context.Categoria.Add(categorium);
+            _context.Categorias.Add(categorium);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetCategorium", new { id = categorium.Id }, categorium);
@@ -87,13 +87,13 @@ namespace DemoTiendaAPIController.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategorium(int id)
         {
-            var categorium = await _context.Categoria.FindAsync(id);
+            var categorium = await _context.Categorias.FindAsync(id);
             if (categorium == null)
             {
                 return NotFound();
             }
 
-            _context.Categoria.Remove(categorium);
+            _context.Categorias.Remove(categorium);
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -101,7 +101,7 @@ namespace DemoTiendaAPIController.Controllers
 
         private bool CategoriumExists(int id)
         {
-            return _context.Categoria.Any(e => e.Id == id);
+            return _context.Categorias.Any(e => e.Id == id);
         }
     }
 }

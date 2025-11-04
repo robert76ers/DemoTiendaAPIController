@@ -15,19 +15,21 @@ public partial class DemoTiendaContext : DbContext
     {
     }
 
-    public virtual DbSet<Categorium> Categoria { get; set; }
+    public virtual DbSet<Categoria> Categorias { get; set; }
 
     public virtual DbSet<Producto> Productos { get; set; }
 
-    public virtual DbSet<vProductosConCategorium> vProductosConCategoria { get; set; }
+    public virtual DbSet<vProductosConCategoria> vProductosConCategoria { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("Name=DemoTienda");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Categorium>(entity =>
+        modelBuilder.Entity<Categoria>(entity =>
         {
+            entity.ToTable("Categoria");
+
             entity.HasIndex(e => e.Nombre, "UX_Categoria_Nombre").IsUnique();
 
             entity.Property(e => e.Descripcion).HasMaxLength(500);
@@ -62,7 +64,7 @@ public partial class DemoTiendaContext : DbContext
                 .HasConstraintName("FK_Producto_Categoria");
         });
 
-        modelBuilder.Entity<vProductosConCategorium>(entity =>
+        modelBuilder.Entity<vProductosConCategoria>(entity =>
         {
             entity
                 .HasNoKey()

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace DemoTiendaAPIController.Data;
 
@@ -19,5 +20,6 @@ public partial class Producto
 
     public DateTime FechaCreacion { get; set; }
 
-    public virtual Categorium IdCategoriaNavigation { get; set; } = null!;
+    [JsonIgnore]
+    public virtual Categoria IdCategoriaNavigation { get; set; } = null!;
 }
