@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace DemoTiendaAPIController.Data;
+namespace DemoTienda.Domain.Entites;
 
 public partial class Categoria
 {

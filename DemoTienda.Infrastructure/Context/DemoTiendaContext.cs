@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using DemoTienda.Domain.Entites;
 using Microsoft.EntityFrameworkCore;
 
 namespace DemoTiendaAPIController.Data;

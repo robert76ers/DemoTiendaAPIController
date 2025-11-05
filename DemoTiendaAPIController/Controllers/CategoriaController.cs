@@ -1,107 +1,55 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using DemoTienda.Application.Services;
+using DemoTienda.Domain.Entites;
 using DemoTiendaAPIController.Data;
+using Microsoft.AspNetCore.Mvc;
 
-namespace DemoTiendaAPIController.Controllers
+namespace DemoTienda.Api.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
-    public class CategoriaController : ControllerBase
+    [Route("api/[controller]")]
+    public class CategoriasController : ControllerBase
     {
-        private readonly DemoTiendaContext _context;
+        private readonly CategoriaService _service;
 
-        public CategoriaController(DemoTiendaContext context)
+        public CategoriasController(CategoriaService service)
         {
-            _context = context;
+            _service = service;
         }
 
-        // GET: api/Categoria
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Categoria>>> GetCategoria()
+        public async Task<IActionResult> Get()
         {
-            return await _context.Categorias.ToListAsync();
+            var items = await _service.ListAsync();
+            return Ok(items);
         }
 
-        // GET: api/Categoria/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Categoria>> GetCategorium(int id)
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> GetById(int id)
         {
-            var categorium = await _context.Categorias.FindAsync(id);
-
-            if (categorium == null)
-            {
-                return NotFound();
-            }
-
-            return categorium;
+            var item = await _service.GetAsync(id);
+            return item is null ? NotFound() : Ok(item);
         }
 
-        // PUT: api/Categoria/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutCategorium(int id, Categoria categorium)
-        {
-            if (id != categorium.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(categorium).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CategoriumExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/Categoria
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Categoria>> PostCategorium(Categoria categorium)
+        public async Task<IActionResult> Post([FromBody] Categoria request)
         {
-            _context.Categorias.Add(categorium);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetCategorium", new { id = categorium.Id }, categorium);
+            var created = await _service.AddAsync(request);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
-        // DELETE: api/Categoria/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCategorium(int id)
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> Put(int id, [FromBody] Categoria request)
         {
-            var categorium = await _context.Categorias.FindAsync(id);
-            if (categorium == null)
-            {
-                return NotFound();
-            }
-
-            _context.Categorias.Remove(categorium);
-            await _context.SaveChangesAsync();
-
+            await _service.UpdateAsync(id, request);
             return NoContent();
         }
 
-        private bool CategoriumExists(int id)
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
         {
-            return _context.Categorias.Any(e => e.Id == id);
+            await _service.DeleteAsync(id);
+            return NoContent();
         }
     }
+
 }

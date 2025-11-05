@@ -1,107 +1,67 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using DemoTienda.Application.Services;
+using DemoTienda.Domain.Entites;
+using DemoTiendaAPIController.Settings;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using DemoTiendaAPIController.Data;
+using Microsoft.Extensions.Options;
 
-namespace DemoTiendaAPIController.Controllers
+namespace DemoTienda.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class ProductoController : ControllerBase
     {
-        private readonly DemoTiendaContext _context;
+        private readonly ProductoService _service;
+        private readonly ProductoSettings _cfg;
 
-        public ProductoController(DemoTiendaContext context)
+        public ProductoController(ProductoService service, IOptionsSnapshot<ProductoSettings> cfg)
         {
-            _context = context;
+            _service = service;
+            _cfg = cfg.Value;
         }
 
-        // GET: api/Producto
+        // GET: api/Productos
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Producto>>> GetProductos()
+        public async Task<IActionResult> Get()
         {
-            return await _context.Productos.ToListAsync();
+            var items = await _service.ListAsync();
+            return Ok(items);
         }
 
-        // GET: api/Producto/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Producto>> GetProducto(int id)
+        // GET: api/Productos/5
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> GetById(int id)
         {
-            var producto = await _context.Productos.FindAsync(id);
-
-            if (producto == null)
-            {
-                return NotFound();
-            }
-
-            return producto;
+            var item = await _service.GetAsync(id);
+            return item is null ? NotFound() : Ok(item);
         }
 
-        // PUT: api/Producto/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutProducto(int id, Producto producto)
-        {
-            if (id != producto.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(producto).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ProductoExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/Producto
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // POST: api/Productos
         [HttpPost]
-        public async Task<ActionResult<Producto>> PostProducto(Producto producto)
+        public async Task<IActionResult> Post([FromBody] Producto request)
         {
-            _context.Productos.Add(producto);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetProducto", new { id = producto.Id }, producto);
+            var created = await _service.AddAsync(request);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
-        // DELETE: api/Producto/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteProducto(int id)
+        // PUT: api/Productos/5
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> Put(int id, [FromBody] Producto request)
         {
-            var producto = await _context.Productos.FindAsync(id);
-            if (producto == null)
-            {
-                return NotFound();
-            }
-
-            _context.Productos.Remove(producto);
-            await _context.SaveChangesAsync();
-
+            await _service.UpdateAsync(id, request);
             return NoContent();
         }
 
-        private bool ProductoExists(int id)
+        // DELETE: api/Productos/5
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
         {
-            return _context.Productos.Any(e => e.Id == id);
+            await _service.DeleteAsync(id);
+            return NoContent();
         }
+
+        // GET: api/Producto/config
+        [HttpGet("config")]
+        public IActionResult Config() => Ok(_cfg);
+
     }
 }
