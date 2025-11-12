@@ -2,6 +2,7 @@
 using DemoTienda.Domain.Entites;
 using DemoTiendaAPIController.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace DemoTienda.Api.Controllers
 {
@@ -10,15 +11,18 @@ namespace DemoTienda.Api.Controllers
     public class CategoriasController : ControllerBase
     {
         private readonly CategoriaService _service;
+        private readonly ILogger<CategoriasController> _logger;
 
-        public CategoriasController(CategoriaService service)
+        public CategoriasController(CategoriaService service, ILogger<CategoriasController> logger)
         {
             _service = service;
+            _logger = logger;
         }
 
         [HttpGet]
         public async Task<IActionResult> Get()
         {
+            _logger.LogInformation("GET /api/categorias");
             var items = await _service.ListAsync();
             return Ok(items);
         }
