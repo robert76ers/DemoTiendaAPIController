@@ -1,6 +1,6 @@
 ﻿using DemoTienda.Application.Interfaces;
 using DemoTienda.Domain.Entites;
-using DemoTiendaAPIController.Data;
+using DemoTienda.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
 
 namespace DemoTienda.Infrastructure.Repositories

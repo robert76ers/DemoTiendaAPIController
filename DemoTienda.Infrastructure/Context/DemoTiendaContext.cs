@@ -1,7 +1,7 @@
 ﻿using DemoTienda.Domain.Entites;
 using Microsoft.EntityFrameworkCore;
 
-namespace DemoTiendaAPIController.Data;
+namespace DemoTienda.Infrastructure.Context;
 
 public partial class DemoTiendaContext : DbContext
 {

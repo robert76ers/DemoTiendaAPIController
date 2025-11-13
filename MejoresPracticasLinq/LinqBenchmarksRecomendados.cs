@@ -1,6 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 using DemoTienda.Domain.Entites;
-using DemoTiendaAPIController.Data;
+using DemoTienda.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
 
 namespace MejoresPracticasLinq

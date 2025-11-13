@@ -1,4 +1,4 @@
-﻿using DemoTiendaAPIController.Data;
+﻿using DemoTienda.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
 
 namespace MejoresPracticasLinq
