@@ -1,6 +1,6 @@
 using DemoTienda.Application.Services;
 using DemoTienda.Infrastructure.Extensions;
-using DemoTiendaAPIController.Data;
+using DemoTienda.Infrastructure.Context;
 using DemoTiendaAPIController.Settings;
 using Microsoft.EntityFrameworkCore;
 

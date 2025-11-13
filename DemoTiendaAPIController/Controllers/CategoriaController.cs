@@ -1,6 +1,5 @@
 ﻿using DemoTienda.Application.Services;
 using DemoTienda.Domain.Entites;
-using DemoTiendaAPIController.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
