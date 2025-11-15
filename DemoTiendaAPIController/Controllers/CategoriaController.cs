@@ -1,12 +1,14 @@
 ﻿using DemoTienda.Application.Services;
 using DemoTienda.Domain.Entites;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
 
 namespace DemoTienda.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Policy = "CatalogRead")]
     public class CategoriasController : ControllerBase
     {
         private readonly CategoriaService _service;
@@ -34,6 +36,7 @@ namespace DemoTienda.Api.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "CatalogWrite")]
         public async Task<IActionResult> Post([FromBody] Categoria request)
         {
             var created = await _service.AddAsync(request);
@@ -41,6 +44,7 @@ namespace DemoTienda.Api.Controllers
         }
 
         [HttpPut("{id:int}")]
+        [Authorize(Policy = "CatalogWrite")]
         public async Task<IActionResult> Put(int id, [FromBody] Categoria request)
         {
             await _service.UpdateAsync(id, request);
@@ -48,6 +52,7 @@ namespace DemoTienda.Api.Controllers
         }
 
         [HttpDelete("{id:int}")]
+        [Authorize(Policy = "CatalogWrite")]
         public async Task<IActionResult> Delete(int id)
         {
             await _service.DeleteAsync(id);

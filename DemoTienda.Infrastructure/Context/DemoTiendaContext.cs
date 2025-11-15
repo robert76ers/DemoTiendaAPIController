@@ -1,9 +1,12 @@
 ﻿using DemoTienda.Domain.Entites;
 using Microsoft.EntityFrameworkCore;
+using DemoTienda.Infrastructure.Auth;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+
 
 namespace DemoTienda.Infrastructure.Context;
 
-public partial class DemoTiendaContext : DbContext
+public partial class DemoTiendaContext : IdentityDbContext<AppUser>
 {
     public DemoTiendaContext()
     {
@@ -25,6 +28,8 @@ public partial class DemoTiendaContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
         modelBuilder.Entity<Categoria>(entity =>
         {
             entity.ToTable("Categoria");
