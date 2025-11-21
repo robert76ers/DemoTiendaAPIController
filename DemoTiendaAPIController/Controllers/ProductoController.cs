@@ -1,5 +1,6 @@
-﻿using DemoTienda.Application.Services;
-using DemoTienda.Domain.Entites;
+﻿using DemoTienda.Application.DTOs.Request;
+using DemoTienda.Application.DTOs.Response;
+using DemoTienda.Application.Services;
 using DemoTiendaAPIController.Settings;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -13,55 +14,136 @@ namespace DemoTienda.Api.Controllers
         private readonly ProductoService _service;
         private readonly ProductoSettings _cfg;
 
-        public ProductoController(ProductoService service, IOptionsSnapshot<ProductoSettings> cfg)
+        public ProductoController(
+            ProductoService service,
+            IOptionsSnapshot<ProductoSettings> cfg)
         {
             _service = service;
             _cfg = cfg.Value;
         }
 
-        // GET: api/Productos
+        /// <summary>
+        /// Obtiene la lista de productos.
+        /// </summary>
+        /// <returns>Lista de productos.</returns>
+        /// <response code="200">Lista de productos devuelta correctamente.</response>
         [HttpGet]
-        public async Task<IActionResult> Get()
+        [ProducesResponseType(typeof(IEnumerable<ProductoResponseDTO>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<IEnumerable<ProductoResponseDTO>>> Get()
         {
-            var items = await _service.ListAsync();
-            return Ok(items);
+            var response = await _service.ListAsync();
+            return Ok(response);
         }
 
-        // GET: api/Productos/5
+        /// <summary>
+        /// Obtiene un producto por su identificador.
+        /// </summary>
+        /// <param name="id">Identificador del producto.</param>
+        /// <response code="200">Producto encontrado.</response>
+        /// <response code="404">No existe un producto con el Id especificado.</response>
         [HttpGet("{id:int}")]
-        public async Task<IActionResult> GetById(int id)
+        [ProducesResponseType(typeof(ProductoResponseDTO), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<ProductoResponseDTO>> GetById(int id)
         {
-            var item = await _service.GetAsync(id);
-            return item is null ? NotFound() : Ok(item);
+            var response = await _service.GetAsync(id);
+
+            if (response is null)
+            {
+                return NotFound(new ProblemDetails
+                {
+                    Status = StatusCodes.Status404NotFound,
+                    Title = "Producto no encontrado",
+                    Detail = $"No existe un producto con Id {id}.",
+                    Instance = HttpContext.Request.Path
+                });
+            }
+
+            return Ok(response);
         }
 
-        // POST: api/Productos
+        /// <summary>
+        /// Crea un nuevo producto.
+        /// </summary>
+        /// <param name="request">Datos del producto a crear.</param>
+        /// <response code="201">Producto creado correctamente.</response>
+        /// <response code="400">Datos de entrada inválidos.</response>
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] Producto request)
+        [ProducesResponseType(typeof(ProductoResponseDTO), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<ProductoResponseDTO>> Post([FromBody] CreateProductoRequestDTO request)
         {
             var created = await _service.AddAsync(request);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+
+            return CreatedAtAction(
+                nameof(GetById),
+                new { id = created.Id },
+                created); // 201
         }
 
-        // PUT: api/Productos/5
+        /// <summary>
+        /// Actualiza un producto existente.
+        /// </summary>
+        /// <param name="id">Identificador del producto.</param>
+        /// <param name="request">Datos a actualizar.</param>
+        /// <response code="204">Producto actualizado correctamente.</response>
+        /// <response code="400">Datos de entrada inválidos.</response>
+        /// <response code="404">Producto no encontrado.</response>
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> Put(int id, [FromBody] Producto request)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Put(int id, [FromBody] UpdateProductoRequestDTO request)
         {
-            await _service.UpdateAsync(id, request);
+            var updated = await _service.UpdateAsync(id, request);
+
+            if (!updated)
+            {
+                return NotFound(new ProblemDetails
+                {
+                    Status = StatusCodes.Status404NotFound,
+                    Title = "Producto no encontrado",
+                    Detail = $"No existe un producto con Id {id}.",
+                    Instance = HttpContext.Request.Path
+                });
+            }
+
             return NoContent();
         }
 
-        // DELETE: api/Productos/5
+        /// <summary>
+        /// Elimina un producto.
+        /// </summary>
+        /// <param name="id">Identificador del producto.</param>
+        /// <response code="204">Producto eliminado correctamente.</response>
+        /// <response code="404">Producto no encontrado.</response>
         [HttpDelete("{id:int}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(int id)
         {
-            await _service.DeleteAsync(id);
+            var deleted = await _service.DeleteAsync(id);
+
+            if (!deleted)
+            {
+                return NotFound(new ProblemDetails
+                {
+                    Status = StatusCodes.Status404NotFound,
+                    Title = "Producto no encontrado",
+                    Detail = $"No existe un producto con Id {id}.",
+                    Instance = HttpContext.Request.Path
+                });
+            }
+
             return NoContent();
         }
 
-        // GET: api/Producto/config
+        /// <summary>
+        /// Obtiene la configuración por defecto de productos.
+        /// </summary>
+        /// <response code="200">Configuración devuelta correctamente.</response>
         [HttpGet("config")]
-        public IActionResult Config() => Ok(_cfg);
-
+        [ProducesResponseType(typeof(ProductoSettings), StatusCodes.Status200OK)]
+        public ActionResult<ProductoSettings> Config() => Ok(_cfg);
     }
 }

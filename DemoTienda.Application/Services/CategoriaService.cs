@@ -1,4 +1,6 @@
-﻿using DemoTienda.Application.Interfaces;
+﻿using DemoTienda.Application.DTOs.Request;
+using DemoTienda.Application.DTOs.Response;
+using DemoTienda.Application.Interfaces;
 using DemoTienda.Domain.Entites;
 using Microsoft.Extensions.Logging;
 
@@ -15,15 +17,76 @@ namespace DemoTienda.Application.Services
             _logger = logger;
         }
 
-        public Task<IEnumerable<Categoria>> ListAsync() 
+        public async Task<IEnumerable<CategoriaResponseDTO>> ListAsync() 
         {
             _logger.LogInformation("Listando categorías");
-            return _repository.ListAsync();
+
+            var items = await _repository.ListAsync();
+
+            return items.Select(x => new CategoriaResponseDTO
+            {
+                Id = x.Id,
+                Nombre = x.Nombre
+            });
         } 
-        public Task<Categoria?> GetAsync(int id) => _repository.GetByIdAsync(id);
-        public Task<Categoria> AddAsync(Categoria c) => _repository.AddAsync(c);
-        public Task UpdateAsync(int id, Categoria c) => _repository.UpdateAsync(id, c);
-        public Task DeleteAsync(int id) => _repository.DeleteAsync(id);
+
+        public async Task<CategoriaResponseDTO?> GetAsync(int id)
+        {
+            var entity =  await _repository.GetByIdAsync(id);
+
+            if (entity is null)
+            {
+                return null;
+            }
+
+            return new CategoriaResponseDTO
+            {
+                Id = entity.Id,
+                Nombre = entity.Nombre
+            };
+        }
+
+        public async Task<CategoriaResponseDTO> AddAsync(CreateCategoriaRequestDTO request)
+        {
+            var entity = new Categoria
+            {
+                Nombre = request.Nombre
+            };
+
+            var created = await _repository.AddAsync(entity);
+
+            return new CategoriaResponseDTO
+            {
+                Id = created.Id,
+                Nombre = created.Nombre
+            };
+        }
+
+        public async Task<bool> UpdateAsync(int id, UpdateCategoriaRequestDTO request)
+        {
+            var existing = await _repository.GetByIdAsync(id);
+
+            if (existing is null)
+            {
+                return false;
+            }
+
+            await _repository.UpdateAsync(id, existing);
+            return true;
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var existing = await _repository.GetByIdAsync(id);
+
+            if (existing is null)
+            {
+                return false;
+            }
+
+            await _repository.DeleteAsync(id);
+            return true;
+        }
     }
 }
 
