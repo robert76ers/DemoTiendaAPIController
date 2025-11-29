@@ -9,10 +9,10 @@ namespace DemoTienda.Application.Interfaces
 {
     public interface ICategoriaRepository
     {
-        Task<IEnumerable<Categoria>> ListAsync();
-        Task<Categoria?> GetByIdAsync(int id);
-        Task<Categoria> AddAsync(Categoria entity);
-        Task UpdateAsync(int id, Categoria entity);
-        Task DeleteAsync(int id);
+        Task<IEnumerable<Categoria>> ListAsync(CancellationToken cancellationToken = default);
+        Task<Categoria?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+        Task<Categoria> AddAsync(Categoria entity, CancellationToken cancellationToken = default);
+        Task UpdateAsync(int id, Categoria entity, CancellationToken cancellationToken = default);
+        Task DeleteAsync(int id, CancellationToken cancellationToken = default);
     }
 }

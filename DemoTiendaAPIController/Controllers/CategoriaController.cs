@@ -30,11 +30,11 @@ namespace DemoTienda.Api.Controllers
         [ProducesResponseType(typeof(IEnumerable<CategoriaResponseDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult<IEnumerable<CategoriaResponseDTO>>> Get()
+        public async Task<ActionResult<IEnumerable<CategoriaResponseDTO>>> Get(CancellationToken cancellationToken)
         {
             _logger.LogInformation("GET /api/categorias");
 
-            var response = await _service.ListAsync();
+            var response = await _service.ListAsync(cancellationToken);
 
             return Ok(response);
         }
@@ -48,9 +48,9 @@ namespace DemoTienda.Api.Controllers
         [HttpGet("{id:int}")]
         [ProducesResponseType(typeof(CategoriaResponseDTO), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<CategoriaResponseDTO>> GetById(int id)
+        public async Task<ActionResult<CategoriaResponseDTO>> GetById(int id, CancellationToken cancellationToken)
         {
-            var response = await _service.GetAsync(id);
+            var response = await _service.GetAsync(id, cancellationToken);
 
             if (response is null)
             {
@@ -80,9 +80,9 @@ namespace DemoTienda.Api.Controllers
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult<CategoriaResponseDTO>> Post([FromBody] CreateCategoriaRequestDTO request)
+        public async Task<ActionResult<CategoriaResponseDTO>> Post([FromBody] CreateCategoriaRequestDTO request, CancellationToken cancellationToken)
         {
-            var created = await _service.AddAsync(request);
+            var created = await _service.AddAsync(request, cancellationToken);
 
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
@@ -100,9 +100,9 @@ namespace DemoTienda.Api.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Put(int id, [FromBody] UpdateCategoriaRequestDTO request)
+        public async Task<IActionResult> Put(int id, [FromBody] UpdateCategoriaRequestDTO request, CancellationToken cancellationToken)
         {
-            var updated = await _service.UpdateAsync(id, request);
+            var updated = await _service.UpdateAsync(id, request, cancellationToken);
 
             if (!updated)
             {
@@ -128,9 +128,9 @@ namespace DemoTienda.Api.Controllers
         [Authorize(Policy = "CatalogWrite")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
-            var deleted = await _service.DeleteAsync(id);
+            var deleted = await _service.DeleteAsync(id, cancellationToken);
 
             if (!deleted)
             {

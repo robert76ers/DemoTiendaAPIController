@@ -2,6 +2,7 @@
 using DemoTienda.Application.DTOs.Response;
 using DemoTienda.Application.Interfaces;
 using DemoTienda.Domain.Entites;
+using DemoTienda.Domain.Exceptions;
 using Microsoft.Extensions.Logging;
 
 namespace DemoTienda.Application.Services
@@ -17,11 +18,11 @@ namespace DemoTienda.Application.Services
             _logger = logger;
         }
 
-        public async Task<IEnumerable<CategoriaResponseDTO>> ListAsync() 
+        public async Task<IEnumerable<CategoriaResponseDTO>> ListAsync(CancellationToken cancellationToken = default) 
         {
             _logger.LogInformation("Listando categorías");
 
-            var items = await _repository.ListAsync();
+            var items = await _repository.ListAsync(cancellationToken);
 
             return items.Select(x => new CategoriaResponseDTO
             {
@@ -30,13 +31,13 @@ namespace DemoTienda.Application.Services
             });
         } 
 
-        public async Task<CategoriaResponseDTO?> GetAsync(int id)
+        public async Task<CategoriaResponseDTO> GetAsync(int id, CancellationToken cancellationToken = default)
         {
-            var entity =  await _repository.GetByIdAsync(id);
+            var entity =  await _repository.GetByIdAsync(id, cancellationToken);
 
             if (entity is null)
             {
-                return null;
+                throw new CategoriaNoEncontradaException(id);
             }
 
             return new CategoriaResponseDTO
@@ -46,14 +47,14 @@ namespace DemoTienda.Application.Services
             };
         }
 
-        public async Task<CategoriaResponseDTO> AddAsync(CreateCategoriaRequestDTO request)
+        public async Task<CategoriaResponseDTO> AddAsync(CreateCategoriaRequestDTO request, CancellationToken cancellationToken = default)
         {
             var entity = new Categoria
             {
                 Nombre = request.Nombre
             };
 
-            var created = await _repository.AddAsync(entity);
+            var created = await _repository.AddAsync(entity, cancellationToken);
 
             return new CategoriaResponseDTO
             {
@@ -62,22 +63,22 @@ namespace DemoTienda.Application.Services
             };
         }
 
-        public async Task<bool> UpdateAsync(int id, UpdateCategoriaRequestDTO request)
+        public async Task<bool> UpdateAsync(int id, UpdateCategoriaRequestDTO request, CancellationToken cancellationToken = default)
         {
-            var existing = await _repository.GetByIdAsync(id);
+            var existing = await _repository.GetByIdAsync(id, cancellationToken);
 
             if (existing is null)
             {
                 return false;
             }
 
-            await _repository.UpdateAsync(id, existing);
+            await _repository.UpdateAsync(id, existing, cancellationToken);
             return true;
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
         {
-            var existing = await _repository.GetByIdAsync(id);
+            var existing = await _repository.GetByIdAsync(id, cancellationToken);
 
             if (existing is null)
             {
