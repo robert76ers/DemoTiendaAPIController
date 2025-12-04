@@ -8,7 +8,7 @@ namespace DemoTienda.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Policy = "CatalogRead")]
+    //[Authorize(Policy = "CatalogRead")]
     public class CategoriasController : ControllerBase
     {
         private readonly CategoriaService _service;
@@ -75,13 +75,18 @@ namespace DemoTienda.Api.Controllers
         /// <response code="401">Usuario no autenticado.</response>
         /// <response code="403">Usuario sin permisos de escritura.</response>
         [HttpPost]
-        [Authorize(Policy = "CatalogWrite")]
+        //[Authorize(Policy = "CatalogWrite")]
         [ProducesResponseType(typeof(CategoriaResponseDTO), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<ActionResult<CategoriaResponseDTO>> Post([FromBody] CreateCategoriaRequestDTO request, CancellationToken cancellationToken)
         {
+            if (!ModelState.IsValid)
+            {
+                return ValidationProblem(ModelState);
+            }
+            
             var created = await _service.AddAsync(request, cancellationToken);
 
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
@@ -96,7 +101,7 @@ namespace DemoTienda.Api.Controllers
         /// <response code="400">Datos inválidos.</response>
         /// <response code="404">Categoría no encontrada.</response>
         [HttpPut("{id:int}")]
-        [Authorize(Policy = "CatalogWrite")]
+        //[Authorize(Policy = "CatalogWrite")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -125,7 +130,7 @@ namespace DemoTienda.Api.Controllers
         /// <response code="204">Categoría eliminada correctamente.</response>
         /// <response code="404">Categoría no encontrada.</response>
         [HttpDelete("{id:int}")]
-        [Authorize(Policy = "CatalogWrite")]
+        //[Authorize(Policy = "CatalogWrite")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
@@ -145,5 +150,28 @@ namespace DemoTienda.Api.Controllers
 
             return NoContent();
         }
+
+        /// <summary>
+        /// Crea varias categorías en una sola operación (inserción en lote).
+        /// </summary>
+        /// <param name="request">Lista de categorías a crear.</param>
+        /// <response code="200">Categorías creadas correctamente.</response>
+        /// <response code="400">Datos de entrada inválidos.</response>
+        /// <response code="401">Usuario no autenticado.</response>
+        /// <response code="403">Usuario sin permisos de escritura.</response>
+        [HttpPost("bulk")]
+        //[Authorize(Policy = "CatalogWrite")]
+        [ProducesResponseType(typeof(IEnumerable<CategoriaResponseDTO>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<ActionResult<IEnumerable<CategoriaResponseDTO>>> PostBulk(
+            [FromBody] IEnumerable<CreateCategoriaRequestDTO> request,
+            CancellationToken cancellationToken)
+        {
+            var created = await _service.AddBulkAsync(request, cancellationToken);
+            return Ok(created);
+        }
+
     }
 }

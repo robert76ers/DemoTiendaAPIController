@@ -14,5 +14,6 @@ namespace DemoTienda.Application.Interfaces
         Task<Categoria> AddAsync(Categoria entity, CancellationToken cancellationToken = default);
         Task UpdateAsync(int id, Categoria entity, CancellationToken cancellationToken = default);
         Task DeleteAsync(int id, CancellationToken cancellationToken = default);
+        Task BulkInsertAsync(IEnumerable<Categoria> entities, CancellationToken cancellationToken = default);
     }
 }

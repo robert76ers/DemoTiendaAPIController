@@ -2,6 +2,7 @@
 using DemoTienda.Domain.Entites;
 using DemoTienda.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
+using EFCore.BulkExtensions;
 
 namespace DemoTienda.Infrastructure.Repositories
 {
@@ -48,6 +49,17 @@ namespace DemoTienda.Infrastructure.Repositories
             await _db.SaveChangesAsync(cancellationToken);
         }
 
+        public async Task BulkInsertAsync(IEnumerable<Categoria> entities, CancellationToken cancellationToken = default)
+        {
+            var list = entities.ToList();
+
+            if (!list.Any())
+            {
+                return;
+            }
+
+            await _db.BulkInsertAsync(list, cancellationToken: cancellationToken);
+        }
     }
 
 }

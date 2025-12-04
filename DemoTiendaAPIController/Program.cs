@@ -11,15 +11,30 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Reflection;
 using System.Text;
-
+using Mapster;
+using DemoTienda.Application.Mapping;
+using MapsterMapper;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using DemoTienda.Application.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+var mapsterConfig = TypeAdapterConfig.GlobalSettings;
+MapsterConfiguration.Register(mapsterConfig);
+
+builder.Services.AddSingleton(mapsterConfig);
+builder.Services.AddScoped<IMapper, Mapper>();
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+builder.Services.AddFluentValidationAutoValidation();
+
+builder.Services.AddValidatorsFromAssemblyContaining<CreateCategoriaRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<UpdateCategoriaRequestValidator>();
 
 builder.Services.AddDbContext<DemoTiendaContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DemoTienda")));

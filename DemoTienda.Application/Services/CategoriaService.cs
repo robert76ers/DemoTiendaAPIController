@@ -4,6 +4,7 @@ using DemoTienda.Application.Interfaces;
 using DemoTienda.Domain.Entites;
 using DemoTienda.Domain.Exceptions;
 using Microsoft.Extensions.Logging;
+using MapsterMapper;
 
 namespace DemoTienda.Application.Services
 {
@@ -11,11 +12,13 @@ namespace DemoTienda.Application.Services
     {
         private readonly ICategoriaRepository _repository;
         private readonly ILogger<CategoriaService> _logger;
+        private readonly IMapper _mapper;
 
-        public CategoriaService(ICategoriaRepository repository, ILogger<CategoriaService> logger)
+        public CategoriaService(ICategoriaRepository repository, ILogger<CategoriaService> logger, IMapper mapper)
         {
             _repository = repository;
             _logger = logger;
+            _mapper = mapper;
         }
 
         public async Task<IEnumerable<CategoriaResponseDTO>> ListAsync(CancellationToken cancellationToken = default) 
@@ -24,11 +27,7 @@ namespace DemoTienda.Application.Services
 
             var items = await _repository.ListAsync(cancellationToken);
 
-            return items.Select(x => new CategoriaResponseDTO
-            {
-                Id = x.Id,
-                Nombre = x.Nombre
-            });
+            return _mapper.Map<IEnumerable<CategoriaResponseDTO>>(items);
         } 
 
         public async Task<CategoriaResponseDTO> GetAsync(int id, CancellationToken cancellationToken = default)
@@ -40,27 +39,16 @@ namespace DemoTienda.Application.Services
                 throw new CategoriaNoEncontradaException(id);
             }
 
-            return new CategoriaResponseDTO
-            {
-                Id = entity.Id,
-                Nombre = entity.Nombre
-            };
+            return _mapper.Map<CategoriaResponseDTO>(entity);
         }
 
         public async Task<CategoriaResponseDTO> AddAsync(CreateCategoriaRequestDTO request, CancellationToken cancellationToken = default)
         {
-            var entity = new Categoria
-            {
-                Nombre = request.Nombre
-            };
+            var entity = _mapper.Map<Categoria>(request);
 
             var created = await _repository.AddAsync(entity, cancellationToken);
 
-            return new CategoriaResponseDTO
-            {
-                Id = created.Id,
-                Nombre = created.Nombre
-            };
+            return _mapper.Map<CategoriaResponseDTO>(created);
         }
 
         public async Task<bool> UpdateAsync(int id, UpdateCategoriaRequestDTO request, CancellationToken cancellationToken = default)
@@ -72,7 +60,9 @@ namespace DemoTienda.Application.Services
                 return false;
             }
 
-            await _repository.UpdateAsync(id, existing, cancellationToken);
+            var entityToUpdate = _mapper.Map<Categoria>(request);
+
+            await _repository.UpdateAsync(id, entityToUpdate, cancellationToken);
             return true;
         }
 
@@ -87,6 +77,15 @@ namespace DemoTienda.Application.Services
 
             await _repository.DeleteAsync(id);
             return true;
+        }
+
+        public async Task<IEnumerable<CategoriaResponseDTO>> AddBulkAsync(
+            IEnumerable<CreateCategoriaRequestDTO> requests,
+            CancellationToken cancellationToken = default)
+        {
+            var entities = _mapper.Map<List<Categoria>>(requests);
+            await _repository.BulkInsertAsync(entities, cancellationToken);
+            return _mapper.Map<IEnumerable<CategoriaResponseDTO>>(entities);
         }
     }
 }
