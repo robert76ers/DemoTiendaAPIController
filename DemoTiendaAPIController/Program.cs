@@ -17,6 +17,9 @@ using MapsterMapper;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using DemoTienda.Application.Validators;
+using DemoTienda.Application.Interfaces;
+using DemoTienda.Infrastructure.Configuration;
+using DemoTienda.Infrastructure.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +38,11 @@ builder.Services.AddFluentValidationAutoValidation();
 
 builder.Services.AddValidatorsFromAssemblyContaining<CreateCategoriaRequestValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<UpdateCategoriaRequestValidator>();
+
+builder.Services.Configure<AzureStorageSettings>(
+    builder.Configuration.GetSection("AzureStorage"));
+
+builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
 
 builder.Services.AddDbContext<DemoTiendaContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DemoTienda")));
