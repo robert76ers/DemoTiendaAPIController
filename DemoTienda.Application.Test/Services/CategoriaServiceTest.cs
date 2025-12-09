@@ -1,8 +1,12 @@
 ﻿using DemoTienda.Application.Interfaces;
 using DemoTienda.Application.Services;
+using DemoTienda.Application.DTOs;
 using DemoTienda.Domain.Entites;
 using Microsoft.Extensions.Logging;
 using Moq;
+using MapsterMapper;
+using DemoTienda.Application.DTOs.Response;
+using DemoTienda.Application.DTOs.Request;
 
 namespace DemoTienda.Application.Test.Services
 {
@@ -10,14 +14,16 @@ namespace DemoTienda.Application.Test.Services
     {
         private readonly Mock<ICategoriaRepository> _repoMock;
         private readonly Mock<ILogger<CategoriaService>> _loggerMock;
+        private readonly Mock<IMapper> _mapperMock;
         private readonly CategoriaService _service;
 
         public CategoriaServiceTests()
         {
             _repoMock = new Mock<ICategoriaRepository>();
-            _loggerMock = new Mock<ILogger<CategoriaService>>();
+            _loggerMock = new Mock<ILogger<CategoriaService>>();    
+            _mapperMock = new Mock<IMapper>();
 
-            _service = new CategoriaService(_repoMock.Object, _loggerMock.Object);
+            _service = new CategoriaService(_repoMock.Object, _loggerMock.Object, _mapperMock.Object);
         }
 
         [Fact]
@@ -30,9 +36,15 @@ namespace DemoTienda.Application.Test.Services
                 new Categoria { Id = 2, Nombre = "Hogar" }
             };
 
+            var categoriasDto = categorias.Select(c => new CategoriaResponseDTO { Id = c.Id, Nombre = c.Nombre }).ToList();
+
             _repoMock
-                .Setup(r => r.ListAsync())
+                .Setup(r => r.ListAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(categorias);
+
+            _mapperMock
+                .Setup(m => m.Map<IEnumerable<CategoriaResponseDTO>>(categorias))
+                .Returns(categoriasDto);
 
             // Act
             var resultado = await _service.ListAsync();
@@ -43,9 +55,8 @@ namespace DemoTienda.Application.Test.Services
                 c => Assert.Equal("Tecnología", c.Nombre),
                 c => Assert.Equal("Hogar", c.Nombre));
 
-            _repoMock.Verify(r => r.ListAsync(), Times.Once);
+            _repoMock.Verify(r => r.ListAsync(It.IsAny<CancellationToken>()), Times.Once);
 
-            // Verificar que se escribió el log de información (opcional)
             _loggerMock.Verify(
                 x => x.Log(
                     LogLevel.Information,
@@ -61,10 +72,15 @@ namespace DemoTienda.Application.Test.Services
         {
             // Arrange
             var categoria = new Categoria { Id = 10, Nombre = "Libros" };
+            var categoriaDto = new CategoriaResponseDTO { Id = 10, Nombre = "Libros" };
 
             _repoMock
-                .Setup(r => r.GetByIdAsync(10))
+                .Setup(r => r.GetByIdAsync(10, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(categoria);
+
+            _mapperMock
+                .Setup(m => m.Map<CategoriaResponseDTO>(categoria))
+                .Returns(categoriaDto);
 
             // Act
             var resultado = await _service.GetAsync(10);
@@ -74,7 +90,7 @@ namespace DemoTienda.Application.Test.Services
             Assert.Equal(10, resultado!.Id);
             Assert.Equal("Libros", resultado.Nombre);
 
-            _repoMock.Verify(r => r.GetByIdAsync(10), Times.Once);
+            _repoMock.Verify(r => r.GetByIdAsync(10, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -82,7 +98,7 @@ namespace DemoTienda.Application.Test.Services
         {
             // Arrange
             _repoMock
-                .Setup(r => r.GetByIdAsync(999))
+                .Setup(r => r.GetByIdAsync(999, It.IsAny<CancellationToken>()))
                 .ReturnsAsync((Categoria?)null);
 
             // Act
@@ -90,60 +106,76 @@ namespace DemoTienda.Application.Test.Services
 
             // Assert
             Assert.Null(resultado);
-            _repoMock.Verify(r => r.GetByIdAsync(999), Times.Once);
+            _repoMock.Verify(r => r.GetByIdAsync(999, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
         public async Task AddAsync_DeberiaLlamarRepositorioYRetornarCategoriaCreada()
         {
             // Arrange
-            var categoriaNueva = new Categoria { Nombre = "Ropa" };
-            var categoriaCreada = new Categoria { Id = 5, Nombre = "Ropa" };
+            var request = new CreateCategoriaRequestDTO { Nombre = "Ropa" };
+            var categoria = new Categoria { Id = 5, Nombre = "Ropa" };
+            var categoriaDto = new CategoriaResponseDTO { Id = 5, Nombre = "Ropa" };
+
+            _mapperMock
+                .Setup(m => m.Map<Categoria>(request))
+                .Returns(categoria);
 
             _repoMock
-                .Setup(r => r.AddAsync(categoriaNueva))
-                .ReturnsAsync(categoriaCreada);
+                .Setup(r => r.AddAsync(categoria, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(categoria);
+
+            _mapperMock
+                .Setup(m => m.Map<CategoriaResponseDTO>(categoria))
+                .Returns(categoriaDto);
 
             // Act
-            var resultado = await _service.AddAsync(categoriaNueva);
+            var resultado = await _service.AddAsync(request);
 
             // Assert
             Assert.NotNull(resultado);
             Assert.Equal(5, resultado.Id);
             Assert.Equal("Ropa", resultado.Nombre);
 
-            _repoMock.Verify(r => r.AddAsync(categoriaNueva), Times.Once);
+            _repoMock.Verify(r => r.AddAsync(categoria, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
         public async Task UpdateAsync_DeberiaLlamarRepositorioConIdYCategoria()
         {
             // Arrange
-            var categoriaActualizada = new Categoria { Id = 3, Nombre = "Electrónica" };
+            var request = new UpdateCategoriaRequestDTO { Nombre = "Electrónica" };
+            var categoria = new Categoria { Id = 3, Nombre = "Electrónica" };
+
+            _mapperMock
+                .Setup(m => m.Map<Categoria>(request))
+                .Returns(categoria);
 
             _repoMock
-                .Setup(r => r.UpdateAsync(3, categoriaActualizada))
+                .Setup(r => r.UpdateAsync(3, categoria, It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
 
             // Act
-            await _service.UpdateAsync(3, categoriaActualizada);
+            var resultado = await _service.UpdateAsync(3, request);
 
             // Assert
-            _repoMock.Verify(r => r.UpdateAsync(3, categoriaActualizada), Times.Once);
+            Assert.True(resultado);
+            _repoMock.Verify(r => r.UpdateAsync(3, categoria, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
         public async Task DeleteAsync_DeberiaLlamarRepositorio()
         {
             // Arrange
-            _repoMock.Setup(r => r.DeleteAsync(3))
+            _repoMock.Setup(r => r.DeleteAsync(3, It.IsAny<CancellationToken>()))
                      .Returns(Task.CompletedTask);
 
             // Act
-            await _service.DeleteAsync(3);
+            var resultado = await _service.DeleteAsync(3);
 
             // Assert
-            _repoMock.Verify(r => r.DeleteAsync(3), Times.Once);
+            Assert.True(resultado);
+            _repoMock.Verify(r => r.DeleteAsync(3, It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 }

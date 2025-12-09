@@ -1,7 +1,11 @@
 ﻿using DemoTienda.Application.Interfaces;
 using DemoTienda.Application.Services;
-using DemoTienda.Domain.Entites;     
+using DemoTienda.Application.DTOs;
+using DemoTienda.Domain.Entites;
 using Moq;
+using MapsterMapper;
+using DemoTienda.Application.DTOs.Response;
+using DemoTienda.Application.DTOs.Request;
 
 namespace DemoTienda.Application.Test.Services
 {
@@ -20,12 +24,14 @@ namespace DemoTienda.Application.Test.Services
         public async Task ListAsync_DeberiaRetornarListado()
         {
             // Arrange
+            var productos = new List<Producto>
+            {
+                new Producto { Id = 1, Nombre = "Mouse", Precio = 25m },
+                new Producto { Id = 2, Nombre = "Teclado", Precio = 40m }
+            };
+
             _repoMock.Setup(r => r.ListAsync())
-                     .ReturnsAsync(new List<Producto>
-                     {
-                         new Producto { Id = 1, Nombre = "Mouse", Precio = 25m },
-                         new Producto { Id = 2, Nombre = "Teclado", Precio = 40m }
-                     });
+                     .ReturnsAsync(productos);
 
             // Act
             var resultado = await _service.ListAsync();
@@ -33,6 +39,9 @@ namespace DemoTienda.Application.Test.Services
             // Assert
             Assert.NotNull(resultado);
             Assert.Equal(2, resultado.Count());
+            Assert.Collection(resultado,
+                p => Assert.Equal("Mouse", p.Nombre),
+                p => Assert.Equal("Teclado", p.Nombre));
             _repoMock.Verify(r => r.ListAsync(), Times.Once);
         }
 
@@ -40,8 +49,10 @@ namespace DemoTienda.Application.Test.Services
         public async Task GetAsync_IdValido_DeberiaRetornarProducto()
         {
             // Arrange
+            var producto = new Producto { Id = 1, Nombre = "Monitor", Precio = 200m };
+
             _repoMock.Setup(r => r.GetByIdAsync(1))
-                     .ReturnsAsync(new Producto { Id = 1, Nombre = "Monitor", Precio = 200m });
+                     .ReturnsAsync(producto);
 
             // Act
             var resultado = await _service.GetAsync(1);
@@ -56,35 +67,54 @@ namespace DemoTienda.Application.Test.Services
         public async Task AddAsync_DeberiaAgregarYRetornarProducto()
         {
             // Arrange
-            var nuevo = new Producto { Nombre = "Impresora", Precio = 150m };
+            var request = new CreateProductoRequestDTO
+            {
+                Nombre = "Impresora",
+                Precio = 150m,
+                IdCategoria = 2
+            };
 
-            _repoMock.Setup(r => r.AddAsync(nuevo))
-                     .ReturnsAsync(new Producto { Id = 10, Nombre = "Impresora", Precio = 150m });
+            var producto = new Producto
+            {
+                Id = 10,
+                Nombre = "Impresora",
+                Precio = 150m,
+                IdCategoria = 2
+            };
+
+            _repoMock.Setup(r => r.AddAsync(It.IsAny<Producto>()))
+                     .ReturnsAsync(producto);
 
             // Act
-            var resultado = await _service.AddAsync(nuevo);
+            var resultado = await _service.AddAsync(request);
 
             // Assert
             Assert.NotNull(resultado);
             Assert.Equal(10, resultado.Id);
             Assert.Equal("Impresora", resultado.Nombre);
-            _repoMock.Verify(r => r.AddAsync(nuevo), Times.Once);
+            _repoMock.Verify(r => r.AddAsync(It.IsAny<Producto>()), Times.Once);
         }
 
         [Fact]
         public async Task UpdateAsync_DeberiaInvocarRepositorioConIdYEntidad()
         {
             // Arrange
-            var producto = new Producto { Nombre = "Notebook", Precio = 800m };
+            var request = new UpdateProductoRequestDTO
+            {
+                Nombre = "Notebook",
+                Precio = 800m,
+                IdCategoria = 3
+            };
 
-            _repoMock.Setup(r => r.UpdateAsync(5, producto))
+            _repoMock.Setup(r => r.UpdateAsync(5, It.IsAny<Producto>()))
                      .Returns(Task.CompletedTask);
 
             // Act
-            await _service.UpdateAsync(5, producto);
+            var resultado = await _service.UpdateAsync(5, request);
 
             // Assert
-            _repoMock.Verify(r => r.UpdateAsync(5, producto), Times.Once);
+            Assert.True(resultado);
+            _repoMock.Verify(r => r.UpdateAsync(5, It.IsAny<Producto>()), Times.Once);
         }
 
         [Fact]
@@ -95,9 +125,10 @@ namespace DemoTienda.Application.Test.Services
                      .Returns(Task.CompletedTask);
 
             // Act
-            await _service.DeleteAsync(3);
+            var resultado = await _service.DeleteAsync(3);
 
             // Assert
+            Assert.True(resultado);
             _repoMock.Verify(r => r.DeleteAsync(3), Times.Once);
         }
     }

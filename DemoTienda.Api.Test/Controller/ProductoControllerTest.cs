@@ -1,4 +1,6 @@
 ﻿using DemoTienda.Api.Controllers;
+using DemoTienda.Application.DTOs.Request;
+using DemoTienda.Application.DTOs.Response;
 using DemoTienda.Application.Interfaces;
 using DemoTienda.Application.Services;
 using DemoTienda.Domain.Entites;
@@ -37,19 +39,29 @@ namespace DemoTienda.Api.Test.Controllers
         public async Task Get_DeberiaRetornarOkConLista()
         {
             // Arrange
+            var productos = new List<Producto>
+            {
+                new Producto { Id = 1, Nombre = "Mouse", Precio = 25m },
+                new Producto { Id = 2, Nombre = "Teclado", Precio = 40m }
+            };
+
+            var productosDto = productos.Select(p => new ProductoResponseDTO
+            {
+                Id = p.Id,
+                Nombre = p.Nombre,
+                Precio = p.Precio,
+                IdCategoria = p.IdCategoria
+            }).ToList();
+
             _repoMock.Setup(r => r.ListAsync())
-                     .ReturnsAsync(new List<Producto>
-                     {
-                         new Producto { Id = 1, Nombre = "Mouse", Precio = 25m },
-                         new Producto { Id = 2, Nombre = "Teclado", Precio = 40m }
-                     });
+                     .ReturnsAsync(productos);
 
             // Act
             var result = await _controller.Get();
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var items = Assert.IsAssignableFrom<IEnumerable<Producto>>(okResult.Value);
+            var items = Assert.IsAssignableFrom<IEnumerable<ProductoResponseDTO>>(okResult.Value);
 
             Assert.Equal(2, items.Count());
         }
@@ -58,15 +70,24 @@ namespace DemoTienda.Api.Test.Controllers
         public async Task GetById_Existe_DeberiaRetornarOk()
         {
             // Arrange
+            var producto = new Producto { Id = 5, Nombre = "Monitor", Precio = 200m };
+            var productoDto = new ProductoResponseDTO
+            {
+                Id = producto.Id,
+                Nombre = producto.Nombre,
+                Precio = producto.Precio,
+                IdCategoria = producto.IdCategoria
+            };
+
             _repoMock.Setup(r => r.GetByIdAsync(5))
-                     .ReturnsAsync(new Producto { Id = 5, Nombre = "Monitor", Precio = 200m });
+                     .ReturnsAsync(producto);
 
             // Act
             var result = await _controller.GetById(5);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var prod = Assert.IsType<Producto>(okResult.Value);
+            var prod = Assert.IsType<ProductoResponseDTO>(okResult.Value);
             Assert.Equal(5, prod.Id);
         }
 
@@ -88,10 +109,31 @@ namespace DemoTienda.Api.Test.Controllers
         public async Task Post_DeberiaRetornarCreatedAtAction()
         {
             // Arrange
-            var request = new Producto { Nombre = "Impresora", Precio = 150m };
+            var request = new CreateProductoRequestDTO
+            {
+                Nombre = "Impresora",
+                Precio = 150m,
+                IdCategoria = 2
+            };
 
-            _repoMock.Setup(r => r.AddAsync(request))
-                     .ReturnsAsync(new Producto { Id = 10, Nombre = "Impresora", Precio = 150m });
+            var producto = new Producto
+            {
+                Id = 10,
+                Nombre = "Impresora",
+                Precio = 150m,
+                IdCategoria = 2
+            };
+
+            var productoDto = new ProductoResponseDTO
+            {
+                Id = producto.Id,
+                Nombre = producto.Nombre,
+                Precio = producto.Precio,
+                IdCategoria = producto.IdCategoria
+            };
+
+            _repoMock.Setup(r => r.AddAsync(It.IsAny<Producto>()))
+                     .ReturnsAsync(producto);
 
             // Act
             var result = await _controller.Post(request);
@@ -100,7 +142,7 @@ namespace DemoTienda.Api.Test.Controllers
             var created = Assert.IsType<CreatedAtActionResult>(result);
             Assert.Equal(nameof(ProductoController.GetById), created.ActionName);
 
-            var value = Assert.IsType<Producto>(created.Value);
+            var value = Assert.IsType<ProductoResponseDTO>(created.Value);
             Assert.Equal(10, value.Id);
             Assert.Equal("Impresora", value.Nombre);
         }
@@ -109,9 +151,14 @@ namespace DemoTienda.Api.Test.Controllers
         public async Task Put_DeberiaRetornarNoContentYActualizar()
         {
             // Arrange
-            var request = new Producto { Nombre = "Notebook", Precio = 800m };
+            var request = new UpdateProductoRequestDTO
+            {
+                Nombre = "Notebook",
+                Precio = 800m,
+                IdCategoria = 3
+            };
 
-            _repoMock.Setup(r => r.UpdateAsync(7, request))
+            _repoMock.Setup(r => r.UpdateAsync(7, It.IsAny<Producto>()))
                      .Returns(Task.CompletedTask);
 
             // Act
@@ -119,7 +166,7 @@ namespace DemoTienda.Api.Test.Controllers
 
             // Assert
             Assert.IsType<NoContentResult>(result);
-            _repoMock.Verify(r => r.UpdateAsync(7, request), Times.Once);
+            _repoMock.Verify(r => r.UpdateAsync(7, It.IsAny<Producto>()), Times.Once);
         }
 
         [Fact]
