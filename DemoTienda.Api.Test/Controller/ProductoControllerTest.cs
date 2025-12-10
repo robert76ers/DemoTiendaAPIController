@@ -15,6 +15,7 @@ namespace DemoTienda.Api.Test.Controllers
     {
         private readonly Mock<IProductoRepository> _repoMock;
         private readonly Mock<IOptionsSnapshot<ProductoSettings>> _optionsMock;
+        private readonly Mock<IDescripcionProductoIAService> _descripcionIAMock;
 
         private readonly ProductoService _service;
         private readonly ProductoController _controller;
@@ -23,6 +24,7 @@ namespace DemoTienda.Api.Test.Controllers
         {
             _repoMock = new Mock<IProductoRepository>();
             _optionsMock = new Mock<IOptionsSnapshot<ProductoSettings>>();
+            _descripcionIAMock = new Mock<IDescripcionProductoIAService>();
 
             _optionsMock.Setup(o => o.Value)
                         .Returns(new ProductoSettings
@@ -32,7 +34,7 @@ namespace DemoTienda.Api.Test.Controllers
                         });
 
             _service = new ProductoService(_repoMock.Object);
-            _controller = new ProductoController(_service, _optionsMock.Object);
+            _controller = new ProductoController(_service, _optionsMock.Object, _descripcionIAMock.Object);
         }
 
         [Fact]
@@ -44,14 +46,6 @@ namespace DemoTienda.Api.Test.Controllers
                 new Producto { Id = 1, Nombre = "Mouse", Precio = 25m },
                 new Producto { Id = 2, Nombre = "Teclado", Precio = 40m }
             };
-
-            var productosDto = productos.Select(p => new ProductoResponseDTO
-            {
-                Id = p.Id,
-                Nombre = p.Nombre,
-                Precio = p.Precio,
-                IdCategoria = p.IdCategoria
-            }).ToList();
 
             _repoMock.Setup(r => r.ListAsync())
                      .ReturnsAsync(productos);
@@ -71,13 +65,6 @@ namespace DemoTienda.Api.Test.Controllers
         {
             // Arrange
             var producto = new Producto { Id = 5, Nombre = "Monitor", Precio = 200m };
-            var productoDto = new ProductoResponseDTO
-            {
-                Id = producto.Id,
-                Nombre = producto.Nombre,
-                Precio = producto.Precio,
-                IdCategoria = producto.IdCategoria
-            };
 
             _repoMock.Setup(r => r.GetByIdAsync(5))
                      .ReturnsAsync(producto);
@@ -122,14 +109,6 @@ namespace DemoTienda.Api.Test.Controllers
                 Nombre = "Impresora",
                 Precio = 150m,
                 IdCategoria = 2
-            };
-
-            var productoDto = new ProductoResponseDTO
-            {
-                Id = producto.Id,
-                Nombre = producto.Nombre,
-                Precio = producto.Precio,
-                IdCategoria = producto.IdCategoria
             };
 
             _repoMock.Setup(r => r.AddAsync(It.IsAny<Producto>()))
@@ -196,6 +175,32 @@ namespace DemoTienda.Api.Test.Controllers
 
             Assert.Equal("EUR", cfg.DefaultCurrency);
             Assert.Equal(10, cfg.MaxResults);
+        }
+
+        [Fact]
+        public async Task GetDescripcionIA_DeberiaRetornarDescripcion()
+        {
+            // Arrange
+            var producto = new Producto { Id = 1, Nombre = "Laptop", Precio = 1200m };
+            var descripcionIA = "Laptop de alta gama con excelente rendimiento.";
+
+            _repoMock.Setup(r => r.GetByIdAsync(1))
+                     .ReturnsAsync(producto);
+
+            _descripcionIAMock.Setup(d => d.GenerarDescripcionAsync(producto.Nombre, producto.Precio))
+                              .ReturnsAsync(descripcionIA);
+
+            // Act
+            var result = await _controller.GetDescripcionIA(1);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<ProductoIAResponseDTO>(okResult.Value);
+
+            Assert.Equal(1, response.Id);
+            Assert.Equal("Laptop", response.Nombre);
+            Assert.Equal(1200m, response.Precio);
+            Assert.Equal(descripcionIA, response.DescripcionIA);
         }
     }
 }

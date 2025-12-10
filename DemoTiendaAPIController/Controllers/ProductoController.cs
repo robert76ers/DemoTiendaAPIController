@@ -4,6 +4,7 @@ using DemoTienda.Application.Services;
 using DemoTiendaAPIController.Settings;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using System.Net;
 
 namespace DemoTienda.Api.Controllers
 {
@@ -13,13 +14,16 @@ namespace DemoTienda.Api.Controllers
     {
         private readonly ProductoService _service;
         private readonly ProductoSettings _cfg;
+        private readonly IDescripcionProductoIAService _descripcionProductoIAService;
 
         public ProductoController(
             ProductoService service,
-            IOptionsSnapshot<ProductoSettings> cfg)
+            IOptionsSnapshot<ProductoSettings> cfg,
+            IDescripcionProductoIAService descripcionProductoIAService)
         {
             _service = service;
             _cfg = cfg.Value;
+            _descripcionProductoIAService = descripcionProductoIAService;
         }
 
         /// <summary>
@@ -145,5 +149,33 @@ namespace DemoTienda.Api.Controllers
         [HttpGet("config")]
         [ProducesResponseType(typeof(ProductoSettings), StatusCodes.Status200OK)]
         public ActionResult<ProductoSettings> Config() => Ok(_cfg);
+
+        /// <summary>
+        /// Devuelve Nombre, Precio y una descripción generada por un LLM local (maximo 300 caracteres)
+        /// </summary>
+        [HttpGet("{id}/descripcionia")]
+        [ProducesResponseType(typeof(ProductoIAResponseDTO), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        public async Task<ActionResult<ProductoIAResponseDTO>> GetDescripcionIA(int id)
+        {
+            var producto = await _service.GetAsync(id);
+
+            if (producto is null)
+                return NotFound();
+
+            var descripcion = await _descripcionProductoIAService
+                .GenerarDescripcionAsync(producto.Nombre, producto.Precio);
+
+            var response = new ProductoIAResponseDTO
+            {
+                Id = producto.Id,
+                Nombre = producto.Nombre,
+                Precio = producto.Precio,
+                DescripcionIA = descripcion
+            };
+
+            return Ok(response);
+
+        }
     }
 }

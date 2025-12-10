@@ -147,6 +147,13 @@ builder.Services.AddAuthorization(options =>
         policy.RequireRole("Admin"));
 });
 
+builder.Services.AddHttpClient();
+builder.Services.AddHttpClient("ollama", client =>
+{
+    client.BaseAddress = new Uri("http://localhost:11434");
+});
+builder.Services.AddScoped<IDescripcionProductoIAService, DescripcionProductoIAService>();
+
 
 var app = builder.Build();
 
@@ -158,11 +165,11 @@ if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
     app.MapOpenApi();
 }
 
-if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "DemoTienda API v1");
+});
 
 app.UseHttpsRedirection();
 
